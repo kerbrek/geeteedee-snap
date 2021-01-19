@@ -1,0 +1,121 @@
+name: geeteedee
+base: core18
+version: '0.2.608'
+summary: Manages Everyday Tasks
+description: |
+  GeeTeeDee is a lightweight and easy to use task management software.
+  It keeps everything simple to let you stay focused on what is really
+  important - getting things done.
+
+grade: stable
+confinement: strict
+
+apps:
+  geeteedee:
+    command: desktop-launch geeteedee
+    environment:
+      # Fallback to XWayland if running in a Wayland session.
+      DISABLE_WAYLAND: 1
+    desktop: usr/share/applications/codea-geeteedee.desktop
+    plugs:
+      - desktop-legacy
+      - unity7
+      - x11
+
+layout:
+  /opt/codea/geeteedee:
+    bind: $SNAP/opt/codea/geeteedee
+
+parts:
+  geeteedee:
+    plugin: dump
+    source: codea-geeteedee_fixed_amd64.deb
+    organize:
+      opt/codea/geeteedee/logo_16.png: usr/share/icons/hicolor/16x16/apps/codea-geeteedee.png
+      opt/codea/geeteedee/logo_32.png: usr/share/icons/hicolor/32x32/apps/codea-geeteedee.png
+      opt/codea/geeteedee/logo_48.png: usr/share/icons/hicolor/48x48/apps/codea-geeteedee.png
+      opt/codea/geeteedee/logo_256.png: usr/share/icons/hicolor/256x256/apps/codea-geeteedee.png
+      opt/codea/geeteedee/logo_32.xpm: usr/share/pixmaps/codea-geeteedee.xpm
+      opt/codea/geeteedee/codea-geeteedee.desktop: usr/share/applications/codea-geeteedee.desktop
+    stage-packages:
+      - libqt4-dbus
+      - libqt4-designer
+      - libqt4-network
+      - libqt4-opengl
+      - libqt4-svg
+      - libqtgui4
+      - xdg-utils
+    after:
+      - desktop-qt4
+
+  # This part installs the `desktop-launch` script which initialises desktop
+  # features such as fonts, themes and the XDG environment. It also installs
+  # the Qt4 runtime libraries.
+  #
+  # It is copied straight from the snapcraft desktop helpers project. Please
+  # periodically check the source for updates and copy the changes.
+  #   https://github.com/ubuntu/snapcraft-desktop-helpers/blob/master/snapcraft.yaml
+  #
+  desktop-qt4:
+    source: https://github.com/ubuntu/snapcraft-desktop-helpers.git
+    source-subdir: qt
+    plugin: make
+    make-parameters: ["FLAVOR=qt4"]
+    build-packages:
+      - build-essential
+      - libqt4-dev
+      - dpkg-dev
+    stage-packages:
+      - libxkbcommon0
+      - ttf-ubuntu-font-family
+      - dmz-cursor-theme
+      - light-themes
+      - adwaita-icon-theme
+      - gnome-themes-standard
+      - shared-mime-info
+      - libgtk2.0-0  # libgdk-x11-2.0.so.0 & libgtk-x11-2.0.so.0
+      - libgdk-pixbuf2.0-0
+      - libqtgui4
+      - libqt4-svg  # for loading icon themes which are svg
+      - appmenu-qt
+      - locales-all
+      - sni-qt
+      - xdg-user-dirs
+
+  # This part removes all the files in this snap which already exist in
+  # connected content and base snaps. Since these files will be available
+  # at runtime from the content and base snaps, they do not need to be
+  # included in this snap itself.
+  #
+  # More info: https://forum.snapcraft.io/t/reducing-the-size-of-desktop-snaps/17280
+  #
+  cleanup:
+    after:  # Make this part run last; list all your other parts here
+      - desktop-qt4
+      - geeteedee
+    plugin: nil
+    build-snaps:  # List all content-snaps and base snaps you're using here
+      - core18
+    override-prime: |
+      set -eux
+      for snap in "core18"; do  # List all content-snaps and base snaps you're using here
+          cd "/snap/$snap/current" && find . -type f,l -exec rm -f "$SNAPCRAFT_PRIME/{}" \;
+      done
+
+plugs:
+  gtk-2-engines:
+    interface: content
+    target: $SNAP/lib/gtk-2.0
+    default-provider: gtk2-common-themes
+  gtk-2-themes:
+    interface: content
+    target: $SNAP/data-dir/themes
+    default-provider: gtk-common-themes
+  icon-themes:
+    interface: content
+    target: $SNAP/data-dir/icons
+    default-provider: gtk-common-themes
+  sound-themes:
+    interface: content
+    target: $SNAP/data-dir/sounds
+    default-provider: gtk-common-themes
