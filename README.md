@@ -22,7 +22,7 @@ Project homepage: https://codea.ru/gtd/
 
 ## Commands
 
-* Dowload deb file and fix it
+* Download deb file and fix it
 
     `make prepare`
 
